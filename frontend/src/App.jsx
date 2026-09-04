@@ -1,122 +1,58 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+import { useEffect, useState } from 'react'
+import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { apiDelete, apiGet, apiPatch, apiPost } from './api/client'
+import { useAuth } from './hooks/useAuth'
+import { AdminRoute, ProtectedRoute } from './components/ProtectedRoute'
+import EventCard from './components/EventCard'
+import { EmptyState, ErrorState, LoadingState } from './components/PageStates'
+import Modal from './components/Modal'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const navItems = [{ label: 'Events', to: '/events' }]
+const authConfig = (auth) => ({ accessToken: auth?.accessToken, refreshToken: auth?.refreshToken, onRefresh: auth?.onRefresh })
+const formatDate = (value, options = { dateStyle: 'full', timeStyle: 'short' }) => new Intl.DateTimeFormat('en', options).format(new Date(value))
+const dateInput = (value) => value ? new Date(value).toISOString().slice(0, 16) : ''
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function Navbar() {
+  const { isAuthenticated, role, logout } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const navigate = useNavigate()
+  const links = isAuthenticated ? [{ label: 'Events', to: '/events' }, { label: 'Dashboard', to: '/dashboard' }, { label: 'My bookings', to: '/my-bookings' }, { label: 'Create event', to: '/create-event' }, { label: 'My events', to: '/my-events' }] : navItems
+  function signOut() { logout(); navigate('/') }
+  return <header className="site-header"><div className="shell nav-wrap">
+    <Link className="brand" to="/" aria-label="Gather home"><span className="brand-mark">G</span><span>gather</span></Link>
+    <nav className={`desktop-nav ${menuOpen ? 'menu-open' : ''}`} aria-label="Primary navigation">{links.map((item) => <NavLink key={item.label} to={item.to} className="nav-link" onClick={() => setMenuOpen(false)}>{item.label}</NavLink>)}{role === 'admin' && <NavLink to="/admin" className="nav-link">Admin</NavLink>}</nav>
+    <div className="nav-actions">{isAuthenticated ? <button className="text-button button-reset" onClick={signOut}>Log out</button> : <><Link className="text-button" to="/login">Log in</Link><Link className="button button-small" to="/register">Get started</Link></>}</div>
+    <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" aria-expanded={menuOpen}>☰</button>
+  </div></header>
 }
 
+function Footer() { return <footer className="site-footer"><div className="shell footer-grid"><div><Link className="brand footer-brand" to="/"><span className="brand-mark">G</span><span>gather</span></Link><p className="footer-note">Good plans start with the right people.</p></div><div className="footer-links"><Link to="/events">Discover events</Link><Link to="/register">Create an account</Link><Link to="/login">Log in</Link></div><p className="footer-copy">© 2026 Gather. Made for memorable moments.</p></div></footer> }
+
+function HomePage() { const { isAuthenticated } = useAuth(); return <main><section className="hero-section"><div className="shell hero-grid"><div className="hero-copy"><p className="eyebrow"><span className="eyebrow-dot" /> Your next favourite memory</p><h1>Make room for <em>something</em> worth showing up for.</h1><p className="hero-description">Find thoughtful gatherings, electric nights, and the people who make them matter.</p><div className="hero-actions"><Link className="button" to="/events">Explore events <span aria-hidden="true">-&gt;</span></Link><Link className="quiet-link" to={isAuthenticated ? '/create-event' : '/login'}>Host an event <span aria-hidden="true">↗</span></Link></div></div><div className="hero-art" aria-label="Abstract illustration of people gathering" role="img"><div className="art-sun" /><div className="art-ring ring-one" /><div className="art-ring ring-two" /><div className="art-card"><span className="art-card-label">This week</span><strong>Make plans<br />that feel like you.</strong><span className="art-card-line" /><span className="art-card-meta">Gather / 01</span></div></div></div></section><section className="signal-strip"><div className="shell signal-grid"><p>Events for every version of you</p><span>Curated locally</span><span>Easy to join</span><span>Worth remembering</span></div></section><section className="intro-section" id="how-it-works"><div className="shell intro-grid"><p className="eyebrow">A better way to go out</p><div><h2>Less scrolling.<br /><span>More being there.</span></h2><p className="section-description">From small workshops to big nights out, discover plans with a pulse and book your place in a few clicks.</p><Link className="quiet-link" to="/events">See what is happening <span aria-hidden="true">-&gt;</span></Link></div></div></section></main> }
+
+function AuthLayout({ children, title, intro }) { return <main className="form-page shell"><div className="form-intro"><p className="eyebrow"><span className="eyebrow-dot" /> Gather account</p><h1>{title}</h1><p className="section-description">{intro}</p></div>{children}</main> }
+function Field({ label, name, type = 'text', value, onChange, required = true, min, placeholder }) { return <label className="field"><span>{label}</span><input name={name} type={type} value={value} onChange={onChange} required={required} min={min} placeholder={placeholder} /></label> }
+
+function LoginPage() { const { login } = useAuth(); const navigate = useNavigate(); const location = useLocation(); const [form, setForm] = useState({ email: '', password: '' }); const [state, setState] = useState({ loading: false, error: '', success: '' }); const from = location.state?.from?.pathname || '/dashboard'; async function submit(event) { event.preventDefault(); setState({ loading: true, error: '', success: '' }); try { await login(form.email, form.password); setState({ loading: false, error: '', success: 'Welcome back!' }); navigate(from, { replace: true }) } catch (error) { setState({ loading: false, error: error.message, success: '' }) } } return <AuthLayout title="Welcome back." intro="Your next good plan is closer than you think."><form className="form-panel" onSubmit={submit}><Field label="Email" name="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" /><Field label="Password" name="password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />{state.error && <ErrorState message={state.error} />}{state.success && <div className="success-message">{state.success}</div>}<button className="button form-submit" disabled={state.loading}>{state.loading ? 'Signing in...' : 'Log in'} <span aria-hidden="true">-&gt;</span></button><p className="form-foot">New here? <Link to="/register">Create an account</Link></p></form></AuthLayout> }
+
+function RegisterPage() { const navigate = useNavigate(); const [form, setForm] = useState({ email: '', name: '', password: '', age: '', college: '', course: '', graduation_year: '' }); const [state, setState] = useState({ loading: false, error: '', success: '' }); function update(event) { setForm({ ...form, [event.target.name]: event.target.value }) } async function submit(event) { event.preventDefault(); setState({ loading: true, error: '', success: '' }); const body = { ...form, age: form.age ? Number(form.age) : null, graduation_year: Number(form.graduation_year) }; try { await apiPost('/auth/register', body); setState({ loading: false, error: '', success: 'Account created. Taking you to login...' }); setTimeout(() => navigate('/login'), 900) } catch (error) { setState({ loading: false, error: error.message, success: '' }) } } return <AuthLayout title="Make an account." intro="A little more you, a lot more to do."><form className="form-panel form-grid" onSubmit={submit}><Field label="Name" name="name" value={form.name} onChange={update} /><Field label="Email" name="email" type="email" value={form.email} onChange={update} /><Field label="Password" name="password" type="password" value={form.password} onChange={update} /><Field label="Age" name="age" type="number" value={form.age} onChange={update} required={false} min="0" /><Field label="College" name="college" value={form.college} onChange={update} /><Field label="Course" name="course" value={form.course} onChange={update} /><Field label="Graduation year" name="graduation_year" type="number" value={form.graduation_year} onChange={update} min="3" />{state.error && <div className="form-wide"><ErrorState message={state.error} /></div>}{state.success && <div className="success-message form-wide">{state.success}</div>}<button className="button form-submit form-wide" disabled={state.loading}>{state.loading ? 'Creating account...' : 'Create account'} <span aria-hidden="true">-&gt;</span></button><p className="form-foot form-wide">Already a member? <Link to="/login">Log in</Link></p></form></AuthLayout> }
+
+function EventsPage() { const { auth, refresh } = useAuth(); const requestAuth = { ...authConfig(auth), onRefresh: refresh }; const [filters, setFilters] = useState({ category: '', location: '', start_date: '', end_date: '', sort: 'upcoming', page: 1, limit: 9 }); const [data, setData] = useState(null); const [state, setState] = useState({ loading: true, error: '' }); async function load() { setState({ loading: true, error: '' }); const params = new URLSearchParams(); Object.entries(filters).forEach(([key, value]) => value && params.set(key, key.includes('date') ? new Date(value).toISOString() : value)); try { setData(await apiGet(`/events?${params}`, requestAuth)); setState({ loading: false, error: '' }) } catch (error) { setState({ loading: false, error: error.message }) } } useEffect(() => { load() }, [filters]); function update(event) { setFilters({ ...filters, [event.target.name]: event.target.value, page: 1 }) } return <main className="page-shell shell"><div className="page-heading"><div><p className="eyebrow"><span className="eyebrow-dot" /> Discover</p><h1>Find your next thing.</h1><p className="section-description">Plans with a pulse, places worth going, people worth meeting.</p></div></div><section className="filters"><input name="category" value={filters.category} onChange={update} placeholder="Category" /><input name="location" value={filters.location} onChange={update} placeholder="Location" /><input name="start_date" type="date" value={filters.start_date} onChange={update} aria-label="Start date" /><input name="end_date" type="date" value={filters.end_date} onChange={update} aria-label="End date" /><select name="sort" value={filters.sort} onChange={update}><option value="upcoming">Upcoming</option><option value="latest">Latest dates</option><option value="newest">Recently added</option><option value="oldest">Oldest added</option></select></section>{state.loading ? <div className="event-grid">{[1, 2, 3].map((item) => <div className="skeleton-card" key={item} />)}</div> : state.error ? <ErrorState message={state.error} onRetry={load} /> : data?.events?.length ? <><div className="event-grid">{data.events.map((event) => <EventCard key={event.id} event={event} />)}</div><Pagination data={data} setPage={(page) => setFilters({ ...filters, page })} /></> : <EmptyState title="No events found. Try changing your filters." action={<Link className="quiet-link" to="/events">Clear the search</Link>} />}</main> }
+function Pagination({ data, setPage }) { return data.total_pages > 1 && <div className="pagination"><button className="button button-muted" disabled={data.page <= 1} onClick={() => setPage(data.page - 1)}>Previous</button><span>Page {data.page} of {data.total_pages}</span><button className="button button-muted" disabled={data.page >= data.total_pages} onClick={() => setPage(data.page + 1)}>Next</button></div> }
+
+function EventDetailsPage() { const { id } = useParams(); const { auth, refresh, isAuthenticated } = useAuth(); const navigate = useNavigate(); const requestAuth = { ...authConfig(auth), onRefresh: refresh }; const [event, setEvent] = useState(null); const [state, setState] = useState({ loading: true, error: '', action: '', message: '' }); async function load() { try { setEvent(await apiGet(`/events/${id}`, requestAuth)); setState((current) => ({ ...current, loading: false })) } catch (error) { setState({ loading: false, error: error.status === 404 ? "We couldn't find that event." : error.message }) } } useEffect(() => { load() }, [id]); async function book() { if (!isAuthenticated) return navigate('/login', { state: { from: { pathname: `/events/${id}` } } }); setState((current) => ({ ...current, action: 'book', message: '', error: '' })); try { const result = await apiPost(`/events/${id}/book`, {}, requestAuth); const waitlisted = 'position' in result; setState({ loading: false, action: '', message: waitlisted ? `This event is full. You've been added to the waitlist${result.position ? ` at position ${result.position}` : ''}.` : "You're booked!", error: '' }); await load() } catch (error) { setState((current) => ({ ...current, action: '', error: error.message })) } } async function leaveWaitlist() { setState((current) => ({ ...current, action: 'leave' })); try { await apiDelete(`/events/${id}/waitlist`, requestAuth); setState((current) => ({ ...current, action: '', message: 'You have left the waitlist.', error: '' })) } catch (error) { setState((current) => ({ ...current, action: '', error: error.message })) } } if (state.loading) return <LoadingState label="Loading event" />; if (state.error && !event) return <main className="page-state shell"><ErrorState message={state.error} onRetry={load} /></main>; const status = event.status?.toLowerCase(); return <main className="detail-page shell"><Link className="back-link" to="/events">← All events</Link><div className="detail-grid"><div className="detail-art" aria-hidden="true"><span>{event.category?.slice(0, 1).toUpperCase()}</span></div><div className="detail-copy"><div className="card-meta"><span className="tag">{event.category}</span><span className={`status status-${status}`}>{status}</span></div><h1>{event.name}</h1><p className="detail-description">{event.description}</p><dl className="detail-facts"><div><dt>When</dt><dd>{formatDate(event.date)}</dd></div><div><dt>Where</dt><dd>{event.venue}{event.location ? `, ${event.location}` : ''}</dd></div><div><dt>Booking opens</dt><dd>{formatDate(event.booking_open_at)}</dd></div><div><dt>Capacity</dt><dd>{event.capacity} places left</dd></div></dl>{state.error && <ErrorState message={state.error} />} {state.message && <div className="success-message">{state.message}</div>}{status === 'active' && !state.message && <button className="button" onClick={book} disabled={Boolean(state.action)}>{state.action === 'book' ? 'Booking...' : 'Book now'} <span aria-hidden="true">-&gt;</span></button>}{status === 'upcoming' && <p className="callout">Booking opens {formatDate(event.booking_open_at)}.</p>}{status === 'closed' && <p className="callout">Booking for this event has closed.</p>}{status === 'cancelled' && <p className="callout">This event has been cancelled.</p>}{state.message?.includes('waitlist') && <button className="quiet-link button-reset" onClick={leaveWaitlist}>{state.action === 'leave' ? 'Leaving...' : 'Leave waitlist'}</button>}</div></div></main> }
+
+function DashboardPage() { const { auth, refresh } = useAuth(); const [bookings, setBookings] = useState([]); const [error, setError] = useState(''); useEffect(() => { apiGet('/bookings', { ...authConfig(auth), onRefresh: refresh }).then(setBookings).catch((e) => setError(e.message)) }, []); return <main className="page-shell shell"><p className="eyebrow"><span className="eyebrow-dot" /> Your Gather</p><h1>Welcome back.</h1><div className="dashboard-actions"><Link className="button" to="/events">Explore events -&gt;</Link><Link className="quiet-link" to="/my-bookings">View my bookings</Link><Link className="quiet-link" to="/create-event">Create an event</Link></div><section className="dashboard-summary"><div><span className="summary-number">{bookings.length}</span><span>bookings</span></div><div><span className="summary-number">{bookings.filter((booking) => booking.status === 'pending').length}</span><span>pending</span></div></section>{error ? <ErrorState message={error} /> : bookings.length === 0 ? <EmptyState title="You haven't booked any events yet." action={<Link className="quiet-link" to="/events">Explore events</Link>} /> : <div className="booking-list">{bookings.slice(0, 3).map((booking) => <BookingRow key={booking.id} booking={booking} />)}</div>}</main> }
+function BookingRow({ booking, onCancel }) { return <div className="booking-row"><div><span className="tag">Booking #{booking.id}</span><h3>Event #{booking.event_id}</h3><p>Booked {formatDate(booking.booking_date, { dateStyle: 'medium' })}</p></div><div><span className={`status status-${booking.status}`}>{booking.status}</span>{onCancel && <button className="quiet-link button-reset" onClick={() => onCancel(booking.id)}>Cancel booking</button>}</div></div> }
+function MyBookingsPage() { const { auth, refresh } = useAuth(); const requestAuth = { ...authConfig(auth), onRefresh: refresh }; const [bookings, setBookings] = useState(null); const [error, setError] = useState(''); const [selected, setSelected] = useState(null); const [busy, setBusy] = useState(false); async function load() { try { setBookings(await apiGet('/bookings', requestAuth)) } catch (e) { setError(e.message) } } useEffect(() => { load() }, []); async function cancel() { setBusy(true); try { await apiDelete(`/bookings/${selected}`, requestAuth); setSelected(null); await load() } catch (e) { setError(e.message) } finally { setBusy(false) } } return <main className="page-shell shell"><p className="eyebrow"><span className="eyebrow-dot" /> Your plans</p><h1>My bookings.</h1>{error && <ErrorState message={error} onRetry={load} />}{bookings === null ? <LoadingState label="Loading bookings" /> : bookings.length === 0 ? <EmptyState title="You haven't booked any events yet." action={<Link className="button" to="/events">Explore events -&gt;</Link>} /> : <div className="booking-list">{bookings.map((booking) => <BookingRow key={booking.id} booking={booking} onCancel={setSelected} />)}</div>}{selected && <Modal title="Cancel this booking?" onClose={() => setSelected(null)} onConfirm={cancel} confirmLabel="Cancel booking" busy={busy}>This will release your place and may move someone from the waitlist into the event.</Modal>}</main> }
+
+function EventFormPage({ edit = false }) { const { id } = useParams(); const { auth, refresh } = useAuth(); const navigate = useNavigate(); const requestAuth = { ...authConfig(auth), onRefresh: refresh }; const [form, setForm] = useState({ name: '', description: '', date: '', booking_open_at: '', location: '', capacity: '', venue: '', category: '' }); const [state, setState] = useState({ loading: edit, submit: false, error: '' }); useEffect(() => { if (edit) apiGet(`/events/${id}`, requestAuth).then((event) => setForm({ ...event, date: dateInput(event.date), booking_open_at: dateInput(event.booking_open_at), capacity: event.capacity })).catch((error) => setState({ loading: false, submit: false, error: error.message })).finally(() => setState((current) => ({ ...current, loading: false }))) }, [id, edit]); function update(event) { setForm({ ...form, [event.target.name]: event.target.value }) } async function submit(event) { event.preventDefault(); if (new Date(form.booking_open_at) >= new Date(form.date)) return setState((current) => ({ ...current, error: 'Booking must open before the event date.' })); setState({ loading: false, submit: true, error: '' }); const body = { ...form, capacity: Number(form.capacity), date: new Date(form.date).toISOString(), booking_open_at: new Date(form.booking_open_at).toISOString() }; try { const result = edit ? await apiPatch(`/events/${id}`, body, requestAuth) : await apiPost('/events', body, requestAuth); navigate(`/events/${result.id}`) } catch (error) { setState({ loading: false, submit: false, error: error.message }) } } if (state.loading) return <LoadingState label="Loading event" />; return <main className="form-page shell"><div className="form-intro"><p className="eyebrow"><span className="eyebrow-dot" /> {edit ? 'Refine your event' : 'Bring people together'}</p><h1>{edit ? 'Edit event.' : 'Create an event.'}</h1></div><form className="form-panel form-grid" onSubmit={submit}><Field label="Event name" name="name" value={form.name} onChange={update} /><Field label="Category" name="category" value={form.category} onChange={update} /><label className="field form-wide"><span>Description</span><textarea name="description" value={form.description} onChange={update} required /></label><Field label="Date and time" name="date" type="datetime-local" value={form.date} onChange={update} /><Field label="Booking opens" name="booking_open_at" type="datetime-local" value={form.booking_open_at} onChange={update} /><Field label="Location" name="location" value={form.location} onChange={update} /><Field label="Venue" name="venue" value={form.venue} onChange={update} /><Field label="Capacity" name="capacity" type="number" value={form.capacity} onChange={update} min="1" /><div className="form-wide">{state.error && <ErrorState message={state.error} />}<button className="button form-submit" disabled={state.submit}>{state.submit ? 'Saving...' : edit ? 'Save changes' : 'Create event'} <span aria-hidden="true">-&gt;</span></button></div></form></main> }
+
+function MyEventsPage() { const { auth, refresh } = useAuth(); const [events, setEvents] = useState(null); const [error, setError] = useState(''); const [selected, setSelected] = useState(null); const requestAuth = { ...authConfig(auth), onRefresh: refresh }; async function load() { try { const result = await apiGet('/events?limit=100&sort=newest', requestAuth); setEvents(result.events.filter((event) => event.host_id === auth?.userId)) } catch (e) { setError(e.message) } } useEffect(() => { load() }, []); async function cancel() { try { await apiDelete(`/events/${selected}`, requestAuth); setSelected(null); await load() } catch (e) { setError(e.message) } } return <main className="page-shell shell"><p className="eyebrow"><span className="eyebrow-dot" /> Your events</p><h1>My events.</h1><p className="section-description">Events are filtered from the existing public event feed using the host ID returned in event data.</p>{error && <ErrorState message={error} />}{events === null ? <LoadingState label="Loading events" /> : events.length ? <div className="event-grid">{events.map((event) => <div key={event.id} className="event-owned"><EventCard event={event} /><div className="owned-actions"><Link className="quiet-link" to={`/events/${event.id}/edit`}>Edit</Link><button className="quiet-link button-reset" onClick={() => setSelected(event.id)}>Cancel event</button></div></div>)}</div> : <EmptyState title="You haven't created any events yet." action={<Link className="button" to="/create-event">Create an event -&gt;</Link>} />}{selected && <Modal title="Cancel this event?" onClose={() => setSelected(null)} onConfirm={cancel} confirmLabel="Cancel event">This will mark the event as cancelled. It will remain visible with its cancelled status.</Modal>}</main> }
+
+function AdminPage() { const { auth, refresh } = useAuth(); const requestAuth = { ...authConfig(auth), onRefresh: refresh }; const [bookingId, setBookingId] = useState(''); const [booking, setBooking] = useState(null); const [error, setError] = useState(''); async function lookup(event) { event.preventDefault(); try { setBooking(await apiGet(`/admin/bookings/${bookingId}`, requestAuth)); setError('') } catch (e) { setError(e.message); setBooking(null) } } return <main className="page-shell shell"><p className="eyebrow"><span className="eyebrow-dot" /> Admin</p><h1>Control room.</h1><p className="section-description">Use the tools exposed by the backend to inspect a booking. Role updates remain available through the existing admin API.</p><form className="inline-form" onSubmit={lookup}><input value={bookingId} onChange={(e) => setBookingId(e.target.value)} type="number" placeholder="Booking ID" required /><button className="button">Look up</button></form>{error && <ErrorState message={error} />}{booking && <div className="booking-row"><div><span className="tag">Booking #{booking.id}</span><h3>User #{booking.user_id} / Event #{booking.event_id}</h3></div><span className={`status status-${booking.status}`}>{booking.status}</span></div>}</main> }
+
+function App() { return <BrowserRouter><div className="app"><Navbar /><Routes><Route path="/" element={<HomePage />} /><Route path="/events" element={<EventsPage />} /><Route path="/events/:id" element={<EventDetailsPage />} /><Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} /><Route element={<ProtectedRoute />}><Route path="/dashboard" element={<DashboardPage />} /><Route path="/my-bookings" element={<MyBookingsPage />} /><Route path="/create-event" element={<EventFormPage />} /><Route path="/my-events" element={<MyEventsPage />} /><Route path="/events/:id/edit" element={<EventFormPage edit />} /></Route><Route element={<AdminRoute />}><Route path="/admin" element={<AdminPage />} /></Route><Route path="*" element={<Navigate to="/" replace />} /></Routes><Footer /></div></BrowserRouter> }
 export default App
