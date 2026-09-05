@@ -11,6 +11,13 @@ from sqlmodel import Session, select
 
 from backend.Database.session import get_session
 from backend.models.user import User
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -22,8 +29,7 @@ def hash_password(password: str):
 def verify_password(password: str, hashed_password: str):
     return pwd_context.verify(password, hashed_password)
 
-SECRET_KEY = "me@2026"
-ALGORITHM = "HS256"
+
 
 def create_access_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
