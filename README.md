@@ -1,10 +1,8 @@
 # Gather — Event Booking Platform
 
-Gather is a full-stack event booking platform that allows users to discover events, create and manage events, book available seats, and join waitlists when events are full.
+Gather is a full-stack event booking platform where users can discover events, create and manage their own events, book seats, and join a waitlist when an event reaches capacity.
 
-The project is built with a **FastAPI backend**, **PostgreSQL database**, and **React + Vite frontend**, with JWT-based authentication, role-based authorization, concurrency-safe booking, and a responsive event-focused interface.
-
----
+The project was built to go beyond basic CRUD by focusing on authentication, authorization, database integrity, concurrency-safe booking, waitlist management, and event lifecycle handling.
 
 ## ✨ Features
 
@@ -13,9 +11,8 @@ The project is built with a **FastAPI backend**, **PostgreSQL database**, and **
 * User registration and login
 * JWT-based authentication
 * Short-lived access tokens
-* Long-lived refresh tokens
-* Automatic session restoration
-* Protected routes
+* Refresh tokens for session restoration
+* Protected API routes
 * Role-based authorization
 * Admin-only operations
 * Password hashing with bcrypt
@@ -23,50 +20,46 @@ The project is built with a **FastAPI backend**, **PostgreSQL database**, and **
 ### 🎫 Event Management
 
 * Create events
-* Edit events
-* Cancel events
+* Edit and cancel events
 * View event details
-* Event categories
-* Event locations and venues
-* Event capacity management
+* Event categories and locations
+* Configurable event capacity
 * Booking opening time
-* Automatic event status lifecycle
+* Automatic event status management
 
 ### 🔎 Event Discovery
 
-* Browse events
-* Filter by category
-* Filter by location
-* Filter by date range
+Users can browse and discover events using:
+
+* Category filters
+* Location filters
+* Date-range filters
 * Pagination
 * Sorting
-* Upcoming/latest/newest/oldest event ordering
-* Responsive event discovery interface
+* Upcoming, latest, newest, and oldest event ordering
 
-### 🎟️ Booking System
+### 🎟️ Booking
 
 * Book available events
 * View personal bookings
 * Cancel bookings
-* Prevent unauthorized booking cancellation
 * Prevent duplicate bookings
+* Prevent unauthorized cancellation
 * Concurrency-safe seat allocation
-* Database-level protection against duplicate bookings
+* Database-level duplicate booking protection
 
-### ⏳ Waitlist System
+### ⏳ Waitlist
 
-When an event is full:
+When an event is full, users can join a waitlist.
 
-* Users can join the waitlist
-* Each user receives a waitlist position
+* Users receive a waitlist position
 * Duplicate waitlist entries are prevented
 * Users can leave the waitlist
-* Waitlist positions are maintained
-* When a booking is cancelled, the first waitlisted user can automatically receive the available seat
+* Cancelled bookings can automatically promote the first waiting user
 
 ### 🕐 Event Lifecycle
 
-Events follow a controlled lifecycle:
+Events automatically move through their lifecycle based on booking and event times:
 
 ```text
 UPCOMING
@@ -76,7 +69,7 @@ ACTIVE
 CLOSED
 ```
 
-Events can also be explicitly cancelled:
+Events can also be cancelled by their host:
 
 ```text
 UPCOMING ─────→ CANCELLED
@@ -84,15 +77,13 @@ UPCOMING ─────→ CANCELLED
 ACTIVE ───────→ CANCELLED
 ```
 
-Event status is controlled by the system based on the booking opening time and event date.
-
-Hosts cannot manually change the event status.
+Hosts cannot arbitrarily change an event's status. The backend determines the state from the event's timing.
 
 ---
 
 # 🏗️ Tech Stack
 
-## Backend
+### Backend
 
 * Python
 * FastAPI
@@ -105,7 +96,7 @@ Hosts cannot manually change the event status.
 * bcrypt
 * psycopg
 
-## Frontend
+### Frontend
 
 * React
 * Vite
@@ -114,7 +105,7 @@ Hosts cannot manually change the event status.
 * React Router
 * ESLint
 
-## Development
+### Other
 
 * REST API
 * JWT Authentication
@@ -129,7 +120,6 @@ Hosts cannot manually change the event status.
 Event-Booking/
 │
 ├── backend/
-│   │
 │   ├── core/
 │   │   └── security.py
 │   │
@@ -155,7 +145,6 @@ Event-Booking/
 │   │   └── waitlist.py
 │   │
 │   ├── services/
-│   │
 │   ├── main.py
 │   └── __init__.py
 │
@@ -165,132 +154,100 @@ Event-Booking/
 │   ├── package.json
 │   └── package-lock.json
 │
-├── .env
 ├── .env.example
 ├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
 
-> The exact frontend structure may evolve as the React application grows.
-
 ---
 
-# 🔄 Application Architecture
+# 🔄 Architecture
 
-Gather follows a client-server architecture:
+Gather uses a client-server architecture.
 
 ```text
-                 ┌──────────────────┐
-                 │   React Frontend │
-                 │      Gather      │
-                 └────────┬─────────┘
-                          │
-                       REST API
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │  FastAPI Backend │
-                 │                  │
-                 │ Auth             │
-                 │ Events           │
-                 │ Bookings         │
-                 │ Waitlist         │
-                 │ Admin            │
-                 └────────┬─────────┘
-                          │
-                       SQLModel
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │   PostgreSQL     │
-                 │     Database     │
-                 └──────────────────┘
+              ┌─────────────────────┐
+              │    React Frontend   │
+              │       Gather        │
+              └──────────┬──────────┘
+                         │
+                      REST API
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │    FastAPI Backend  │
+              │                     │
+              │  Authentication     │
+              │  Events             │
+              │  Bookings           │
+              │  Waitlist           │
+              │  Admin              │
+              └──────────┬──────────┘
+                         │
+                      SQLModel
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │     PostgreSQL      │
+              └─────────────────────┘
 ```
 
-The frontend is responsible for the user interface and client-side state.
+The frontend handles the user interface and client-side state.
 
-The backend remains responsible for:
+The backend is responsible for authentication, authorization, validation, business logic, seat allocation, event lifecycle management, and database operations.
 
-* Authentication
-* Authorization
-* Validation
-* Business logic
-* Seat allocation
-* Event lifecycle
-* Database operations
-* Security
-
-The frontend never acts as a security boundary.
+Frontend checks are used for UI and navigation only; **security decisions are enforced by the backend.**
 
 ---
 
-# 🔐 Authentication Flow
+# 🔐 Authentication
 
 ## Registration
 
 ```text
 User
- │
- ▼
+ ↓
 Registration Form
- │
- ▼
+ ↓
 POST /auth/register
- │
- ▼
+ ↓
 Password Hashing
- │
- ▼
+ ↓
 PostgreSQL
- │
- ▼
+ ↓
 User Created
 ```
 
-Passwords are never stored as plaintext.
-
----
+Passwords are hashed before being stored and are never stored as plaintext.
 
 ## Login
 
 ```text
 User
- │
- ▼
+ ↓
 Login Form
- │
- ▼
+ ↓
 POST /auth/login
- │
- ▼
-Verify Credentials
- │
- ▼
+ ↓
+Credential Verification
+ ↓
 Access Token + Refresh Token
- │
- ▼
-React Authentication State
- │
- ▼
+ ↓
 Authenticated Application
 ```
 
-The login endpoint uses OAuth2 password-form authentication.
-
-The frontend therefore sends credentials as form data rather than JSON.
-
----
+The login endpoint uses OAuth2 password-form authentication, so credentials are submitted as form data.
 
 ## Protected Requests
 
-Authenticated API requests use:
+Authenticated requests use:
 
 ```text
 Authorization: Bearer <access_token>
 ```
 
-The backend extracts the token, verifies its signature and expiration, retrieves the user, and performs authorization checks where required.
+The backend verifies the token, checks its expiration, retrieves the associated user, and performs authorization checks where required.
 
 ---
 
@@ -300,94 +257,80 @@ Gather uses two JWT tokens.
 
 ### Access Token
 
-Used for normal authenticated API requests.
-
-It has a short lifetime to reduce the impact of token theft.
+Used for normal authenticated API requests and configured with a short lifetime.
 
 ### Refresh Token
 
-Used to obtain a new access token when the access token expires.
-
-Conceptually:
+Used to obtain a new access token after the access token expires.
 
 ```text
 Access Token
-     │
-     │ expires
-     ▼
+      │
+      │ expires
+      ▼
 Refresh Token
-     │
-     ▼
+      │
+      ▼
 POST /auth/refresh
-     │
-     ▼
+      │
+      ▼
 New Access Token
 ```
 
-The frontend handles session restoration and refreshes authentication when required.
+This allows users to remain signed in without requiring them to log in again every time an access token expires.
 
 ---
 
-# 🎫 Booking Architecture
+# 🎟️ Booking & Concurrency
 
-Booking is designed to remain correct even when multiple users attempt to book the same event at nearly the same time.
+One of the main engineering challenges in Gather is preventing **overbooking when multiple users attempt to book the last available seats at the same time.**
 
-The event row is locked during the critical booking operation using PostgreSQL row-level locking.
-
-Conceptually:
+A simplified booking flow is:
 
 ```text
-Request A ──┐
-            │
-Request B ──┼──→ Lock Event Row
-            │
-Request C ──┘
-                  │
-                  ▼
-             Check Capacity
-                  │
-                  ▼
-             Create Booking
-                  │
-                  ▼
-              Commit
+Booking Request
+      ↓
+Lock Event Row
+      ↓
+Check Capacity
+      ↓
+Create Booking
+      ↓
+Commit Transaction
 ```
 
-This ensures that concurrent requests cannot incorrectly allocate the same available seat.
+PostgreSQL row-level locking is used during the critical booking operation.
+
+This prevents concurrent requests from independently seeing the same available capacity and allocating the same seat.
 
 ---
 
 # 🛡️ Duplicate Booking Protection
 
-The booking table uses a database-level unique constraint:
+The booking table uses a database-level unique constraint on:
 
 ```text
 (user_id, event_id)
 ```
 
-This prevents the same user from booking the same event more than once.
+The application also checks for an existing booking before creating one.
 
-The application also checks for existing bookings before creating a new one.
-
-The database constraint provides an additional layer of protection against race conditions.
+The database constraint provides an additional layer of protection against race conditions and duplicate requests.
 
 ---
 
-# ⏳ Waitlist Architecture
+# ⏳ Waitlist
 
-When an event has no remaining capacity:
+When an event reaches capacity:
 
 ```text
 User attempts booking
-        │
-        ▼
+        ↓
 Event is full
-        │
-        ▼
+        ↓
 Join Waitlist
-        │
-        ▼
-Position Assigned
+        ↓
+Waitlist position assigned
 ```
 
 For example:
@@ -398,36 +341,27 @@ User B → Position 2
 User C → Position 3
 ```
 
-When a booked seat becomes available:
+When an existing booking is cancelled:
 
 ```text
 Booking Cancelled
-        │
-        ▼
+       ↓
 Check Waitlist
-        │
-   ┌────┴────┐
-   │         │
-  Yes        No
-   │         │
-   ▼         ▼
-Promote    Increase
-first      capacity
-waitlisted
-user
+       ↓
+First waiting user
+       ↓
+Seat promoted
 ```
 
-The event row is locked during the cancellation/promotion operation so that seat allocation remains consistent.
+The cancellation and promotion operation also uses event-level locking to keep seat allocation consistent.
 
 ---
 
 # 🕐 Event Lifecycle
 
-An event's status is determined by its booking opening time and event date.
+An event's status is derived from its booking opening time and event date.
 
 ### Upcoming
-
-Before booking opens:
 
 ```text
 now < booking_open_at
@@ -435,15 +369,11 @@ now < booking_open_at
 
 ### Active
 
-Booking is open:
-
 ```text
 booking_open_at <= now < event_date
 ```
 
 ### Closed
-
-The event date has passed:
 
 ```text
 now >= event_date
@@ -451,17 +381,17 @@ now >= event_date
 
 ### Cancelled
 
-A host explicitly cancels the event.
+A host can cancel an event before or during its lifecycle.
 
-Cancelled events remain in the database instead of being physically deleted.
+Cancelled events remain in the database rather than being physically deleted.
 
 ---
 
-# 🔎 Event Discovery
+# 🔎 Event Discovery API
 
-The main event discovery endpoint is:
+The main discovery endpoint is:
 
-```http
+```text
 GET /events
 ```
 
@@ -469,7 +399,7 @@ It supports:
 
 * Category filtering
 * Location filtering
-* Date range filtering
+* Date-range filtering
 * Pagination
 * Sorting
 
@@ -485,7 +415,7 @@ limit
 sort
 ```
 
-Supported sorting options:
+Sorting options include:
 
 ```text
 upcoming
@@ -494,7 +424,7 @@ newest
 oldest
 ```
 
-The API returns pagination metadata including:
+The API also returns pagination metadata such as:
 
 * Current page
 * Page size
@@ -509,7 +439,7 @@ The API returns pagination metadata including:
 
 | Method | Endpoint         | Description          |
 | ------ | ---------------- | -------------------- |
-| POST   | `/auth/register` | Register a new user  |
+| POST   | `/auth/register` | Register a user      |
 | POST   | `/auth/login`    | Login                |
 | POST   | `/auth/refresh`  | Refresh access token |
 
@@ -540,178 +470,18 @@ Administrative operations are available under:
 /admin
 ```
 
-The exact administrative endpoints are documented through the FastAPI OpenAPI documentation.
+The complete API is available through the automatically generated FastAPI documentation.
 
 ---
 
-# 🚀 Getting Started
+# 🧪 Example User Flows
 
-## Prerequisites
-
-Install:
-
-* Python 3.10+
-* Node.js
-* PostgreSQL
-* Git
-
----
-
-# 1. Clone the Repository
-
-```bash
-git clone <your-repository-url>
-cd Event-Booking
-```
-
----
-
-# 2. Backend Setup
-
-Create a virtual environment:
-
-```bash
-python -m venv venv
-```
-
-Activate it on Windows:
-
-```bash
-venv\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-# 3. Configure Environment Variables
-
-Create a `.env` file in the project root.
-
-Example:
-
-```env
-DATABASE_URL=postgresql+psycopg://username:password@localhost:5432/Event_booking
-VITE_API_URL=http://localhost:8000
-```
-
-The actual database credentials should never be committed to GitHub.
-
-Use `.env.example` to document the required environment variables without exposing real credentials.
-
----
-
-# 4. Database Setup
-
-Make sure PostgreSQL is running and the Gather database exists.
-
-Run the Alembic migrations:
-
-```bash
-alembic upgrade head
-```
-
-This creates and updates the required database tables.
-
----
-
-# 5. Start the Backend
-
-From the project root:
-
-```bash
-uvicorn backend.main:app --reload
-```
-
-The backend will be available at:
-
-```text
-http://localhost:8000
-```
-
-Interactive API documentation:
-
-```text
-http://localhost:8000/docs
-```
-
----
-
-# 6. Start the Frontend
-
-Open another terminal:
-
-```bash
-cd frontend
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Start the Vite development server:
-
-```bash
-npm run dev
-```
-
-The frontend will normally be available at:
-
-```text
-http://localhost:5173
-```
-
----
-
-# 🔗 Frontend-Backend Communication
-
-The React frontend communicates with the FastAPI backend using REST API requests.
-
-The frontend API base URL is configured using:
-
-```env
-VITE_API_URL=http://localhost:8000
-```
-
-Example:
-
-```text
-React
- │
- │ POST /auth/login
- ▼
-FastAPI
- │
- │ Authenticate
- ▼
-PostgreSQL
- │
- ▼
-FastAPI
- │
- │ Tokens
- ▼
-React
-```
-
----
-
-# 🧪 Testing the Application
-
-A normal user flow:
+### Normal Booking
 
 ```text
 Register
    ↓
 Login
-   ↓
-Dashboard
    ↓
 Explore Events
    ↓
@@ -724,211 +494,145 @@ My Bookings
 Cancel Booking
 ```
 
-A waitlist flow:
+### Waitlist
 
 ```text
 Create Event
-     ↓
-Fill Event Capacity
-     ↓
-Another User Attempts Booking
-     ↓
+      ↓
+Event reaches capacity
+      ↓
+Another user attempts booking
+      ↓
 Join Waitlist
-     ↓
-Existing Booking Cancelled
-     ↓
-First Waitlisted User Gets Seat
+      ↓
+Existing booking is cancelled
+      ↓
+First waitlisted user is promoted
 ```
 
 ---
 
-# 🛡️ Security
+# 🛡️ Security & Data Integrity
 
-Gather currently implements several security measures:
+Gather currently uses:
 
 * Password hashing
 * JWT authentication
 * Access-token expiration
 * Refresh tokens
-* Protected routes
+* Protected API routes
 * Role-based authorization
 * Ownership checks
 * Database uniqueness constraints
 * PostgreSQL row-level locking
 * Environment-based configuration
-* No backend secrets in the frontend
+* Backend-enforced permissions
 
-Frontend authorization checks are used for navigation and UI purposes only.
+The frontend is **not treated as a security boundary**.
 
-The backend remains responsible for enforcing permissions.
+Sensitive operations such as authorization, booking validation, and seat allocation are handled by the backend.
 
 ---
 
 # 🧩 Engineering Highlights
 
-Gather goes beyond a basic CRUD application by addressing several real backend problems.
+Gather was designed to address problems that appear in real booking systems rather than stopping at basic CRUD.
 
-### Concurrency
+### Concurrent Booking
 
-Database row locking is used to prevent inconsistent seat allocation when multiple booking requests happen concurrently.
+PostgreSQL row-level locking protects seat allocation when multiple requests arrive at the same time.
 
 ### Data Integrity
 
-Database constraints provide protection against duplicate bookings.
+Database constraints prevent duplicate bookings even when application-level checks are bypassed or race with another request.
 
-### Authorization
+### Waitlist Promotion
 
-Users can only perform operations they are authorized to perform, while administrative operations are protected separately.
+Cancelled bookings can automatically release seats to waiting users instead of simply increasing the event's capacity.
 
 ### Event Lifecycle
 
-Event states are derived from booking and event timing instead of allowing arbitrary status manipulation.
+Event status is derived from time-based rules rather than allowing users to arbitrarily manipulate event states.
 
-### Waitlist Management
+### Authorization
 
-Cancelled bookings can automatically promote the first waiting user instead of simply increasing capacity.
+Users can only modify resources they are authorized to access, while administrative operations are protected separately.
 
 ### API-Driven Frontend
 
-The React frontend consumes the actual FastAPI API rather than relying on mock or hardcoded event data.
+The React application communicates with the actual FastAPI backend through REST APIs rather than relying on hardcoded or mock event data.
 
 ---
 
-# 🚀 Future Roadmap
+# 🚀 Roadmap
 
-Gather will gradually evolve toward a more production-oriented architecture.
+Gather is currently being developed toward a more production-oriented architecture.
 
-## 📧 Email Notifications
+### 📧 Email Notifications
 
-Add reliable email delivery for:
+Planned email functionality includes:
 
-* Password reset links
+* Password reset emails
 * Booking confirmations
 * Booking cancellation confirmations
 * Waitlist promotion notifications
 * Event cancellation notifications
 * Event reminders
 
-### Why?
+Email functionality is **not currently implemented**.
 
-Important event updates should reach users even when they are not actively using Gather.
+### ⚡ Redis
 
----
+Planned uses include:
 
-## ⚡ Redis
-
-Introduce Redis for:
-
-* Caching frequently requested event data
+* Event caching
 * Reducing repeated database queries
 * Temporary data
-* Rate-limiting support
-* Improving API response times
+* Rate limiting
 
-### Why?
+### 🔄 Background Jobs
 
-Event discovery can generate many repeated requests. Caching frequently accessed information can reduce database load and improve response times.
-
----
-
-## 🔄 Celery & Background Jobs
-
-Introduce Celery with Redis as a task queue.
-
-Potential background tasks:
+Celery with Redis is planned for tasks such as:
 
 * Sending emails
-* Sending event reminders
-* Automatically updating event statuses
-* Cleaning expired reset tokens
-* Processing time-consuming operations
+* Event reminders
+* Expired-token cleanup
+* Other operations that should run outside the request cycle
 
-### Why?
+### 🔔 WebSockets
 
-Slow operations should not block an API request.
+Planned real-time features include:
 
-For example:
-
-```text
-User books event
-      │
-      ▼
-API immediately responds
-      │
-      ▼
-Background worker
-      │
-      └── Send confirmation email
-```
-
-The user does not have to wait for the email operation to finish.
-
----
-
-## 🔔 WebSockets
-
-Add real-time communication for:
-
-* Live event capacity updates
-* Real-time waitlist changes
-* Instant booking notifications
 * Live seat availability
+* Live capacity updates
+* Waitlist updates
+* Instant booking notifications
 
-### Why?
+### 🐳 Docker
 
-Users should not need to repeatedly refresh an event page to discover that availability has changed.
+Containerize the application and its supporting services for consistent development and deployment.
 
-Future flow:
-
-```text
-User A books seat
-      │
-      ▼
-Backend updates database
-      │
-      ▼
-WebSocket event
-      │
-      ├──────────────→ User B
-      │                 "1 seat remaining"
-      │
-      └──────────────→ User C
-                        "Event is now full"
-```
-
----
-
-## 🐳 Docker
-
-Containerize Gather using Docker.
-
-Potential architecture:
+Planned architecture:
 
 ```text
                 Gather
-                  │
-        ┌─────────┴─────────┐
-        │                   │
-    Frontend             Backend
-     React                FastAPI
-                            │
-                    ┌───────┴───────┐
-                    │               │
-               PostgreSQL         Redis
-                                    │
-                                  Celery
-                                  Worker
+                   │
+        ┌──────────┴──────────┐
+        │                     │
+     React                  FastAPI
+     Frontend                Backend
+                               │
+                    ┌──────────┴──────────┐
+                    │                     │
+               PostgreSQL              Redis
+                                          │
+                                       Celery
+                                       Worker
 ```
 
-### Why?
+### 🧪 Automated Testing
 
-Docker provides a consistent environment for development, testing, and deployment and makes running multiple services easier.
-
----
-
-## 🧪 Automated Testing
-
-Add automated tests for:
+Planned test coverage includes:
 
 * Authentication
 * Event creation
@@ -941,33 +645,21 @@ Add automated tests for:
 * Authorization
 * Admin operations
 
-### Why?
+### ☁️ Deployment
 
-As Gather grows, automated tests will help ensure new features do not break existing functionality.
-
----
-
-## ☁️ Production Deployment
-
-Deploy Gather to a cloud environment with:
+Future deployment will include:
 
 * Production PostgreSQL
-* Containerized backend
+* Containerized services
 * Frontend hosting
-* Environment-based configuration
 * HTTPS
 * Production logging
 * Monitoring
+* Environment-based configuration
 
-### Why?
+### 🛡️ Advanced Security
 
-Move Gather from a local development project toward a production-ready application.
-
----
-
-## 🛡️ Advanced Security
-
-Future security improvements may include:
+Planned improvements include:
 
 * Refresh-token rotation
 * Refresh-token revocation
@@ -978,31 +670,26 @@ Future security improvements may include:
 * Improved API validation
 * Production monitoring
 
-### Why?
-
-As Gather becomes publicly accessible, authentication and API security need additional protection against abuse and token compromise.
-
 ---
 
 # 🎯 Project Goal
 
-Gather was built to explore how a real-world event booking platform can handle more than basic CRUD operations.
+Gather was built to explore the engineering challenges behind a real event booking system.
 
 The project focuses on:
 
-* Authentication
-* Authorization
+* Authentication and authorization
 * REST API design
 * Database relationships
-* Pagination
-* Filtering
+* Event discovery
+* Pagination and filtering
 * Event lifecycle management
 * Concurrency
 * Seat allocation
-* Waitlists
-* Frontend-backend integration
+* Database integrity
+* Waitlist management
+* React–FastAPI integration
 
-A major engineering focus is **maintaining correct seat allocation under concurrent booking requests**.
+The main engineering challenge is maintaining **correct seat allocation when multiple users attempt to book limited capacity concurrently**.
 
----
-
+Rather than treating booking as a simple CRUD operation, Gather uses database-level concurrency control and integrity constraints to keep the system consistent.
