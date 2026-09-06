@@ -12,7 +12,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://event-booking-brown.vercel.app"
+        "https://event-booking-brown.vercel.app",
+        "https://event-booking-r5a54u77h-swetakshimishras-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
