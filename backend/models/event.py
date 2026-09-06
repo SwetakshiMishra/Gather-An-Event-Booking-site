@@ -24,14 +24,18 @@ class Event(SQLModel, table=True):
     category: str
     status: str
     booking_open_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
     host_id: int = Field(foreign_key="user.id")
 
     host: "User" = Relationship(
         back_populates="hosted_events"
     )
+
     waitlist_entries: list["Waitlist"] = Relationship(
-    back_populates="event"
-)
+        back_populates="event"
+    )
+
     bookings: list["Booking"] = Relationship(
         back_populates="event"
     )
